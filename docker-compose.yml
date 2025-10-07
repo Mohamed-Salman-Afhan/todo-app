@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    restart: always
+    environment:
+      # Removed MYSQL_ROOT_PASSWORD as per your configuration
+      MYSQL_DATABASE: todo_db
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  backend:
+    # Adjusted the build path to point to your specific backend Dockerfile location
+    build: ./backend/todoapp
+    restart: always
+    ports:
+      - "9100:9100"
+    environment:
+      # Updated the datasource URL to reflect the no-password setup
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/todo_db
+      # You might also need to explicitly set the username and password to empty strings in your Spring Boot application.properties
+      # spring.datasource.username=root
+      # spring.datasource.password=
+    depends_on:
+      - db
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: http://backend:9100/api/tasks
+    restart: always
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+
+volumes:
+  mysql_data:
